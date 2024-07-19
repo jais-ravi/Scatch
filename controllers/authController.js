@@ -4,11 +4,11 @@ const jwt = require("jsonwebtoken");
 const { genrateToken } = require("../utils/genrateToken");
 
 
-module.exports.registerUser = async function  (req, res) {
+module.exports.registerUser = async function (req, res) {
     try {
         let { email, password, fullname } = req.body;
 
-        let user = await userModel.findOne({email:email});
+        let user = await userModel.findOne({ email: email });
         if (user) return res.status(401).send("You already have account, please login");
 
         bcrypt.genSalt(10, function (err, salt) {
@@ -33,3 +33,25 @@ module.exports.registerUser = async function  (req, res) {
     }
 
 };
+
+module.exports.loginUser = async function (req, res) {
+    let { email, password } = req.body;
+
+    let user = await userModel.findOne({ email: email });
+    if (!user) return res.send("Email or Password incorrect");
+
+    bcrypt.compare(password, user.password, function (err, result){
+        if(result){
+            let token = genrateToken(user);
+            res.cookie("token",token);
+            res.redirect("/shop");
+        }else{
+            return res.send("Email or Password incorrect");
+        }
+    });
+};
+
+module.exports.logout = function (req , res){
+    res.cookie("token","");
+    res.redirect("/");
+}
